@@ -186,15 +186,15 @@ charset-normalizer==3.5.2 \
     --hash=sha256:fd1fbe0f116b6e55da77aca2c6ddcddcfac2186cbf78bdebf40fc156efca389d \
     --hash=sha256:fe9753dfee015c570d73df76f899f18444d41388bffcde097deba51c4fadbb9f
     # via requests
-django==5.1.15 \
-    --hash=sha256:117871e58d6eda37f09870b7d73a3d66567b03aecd515b386b1751177c413432 \
-    --hash=sha256:46a356b5ff867bece73fc6365e081f21c569973403ee7e9b9a0316f27d0eb947
+django==5.2.18 \
+    --hash=sha256:461c5dd06d2ea16bd5ca37d3f46e4def1d6b0fe7588c6f4e2119517bb0af8b2d \
+    --hash=sha256:92ed81d500be6408ecd704d7bd1366c534f30427bffcc63c5fefb129561aec7c
     # via
     #   -r requirements.in
     #   djangorestframework
-djangorestframework==3.15.2 \
-    --hash=sha256:2b8871b062ba1aefc2de01f773875441a961fefbf79f5eed1e32b2f096944b20 \
-    --hash=sha256:36fe88cd2d6c6bec23dca9804bab2ba5517a8bb9d8f47ebc68981b56840107ad
+djangorestframework==3.18.3 \
+    --hash=sha256:446a9b352e7eff630421ab3f2328bd2401b109a9470afa4a31189994911ed030 \
+    --hash=sha256:8544bb674846731b1e3c9b309236ee1dc412905a0aa725be2ec193ca950a7d12
     # via -r requirements.in
 idna==3.20 \
     --hash=sha256:a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44 \
@@ -269,9 +269,9 @@ psycopg2-binary==2.9.12 \
     --hash=sha256:fb1828cf3da68f99e45ebce1355d65d2d12b6a78fb5dfb16247aad6bdef5f5d2 \
     --hash=sha256:ffdd7dc5463ccd61845ac37b7012d0f35a1548df9febe14f8dd549be4a0bc81e
     # via -r requirements.in
-requests==2.32.5 \
-    --hash=sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6 \
-    --hash=sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf
+requests==2.34.2 \
+    --hash=sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0 \
+    --hash=sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed
     # via -r requirements.in
 sqlparse==0.6.0 \
     --hash=sha256:113c35c75365ab9cc9c7231d68c6428fb11c085fc8e9eb1ad659b7ddbf6cd2b9 \
