@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 from django.urls import path
-
 from vending.views import ussd_view
 
 

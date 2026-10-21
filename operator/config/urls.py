@@ -1,5 +1,4 @@
 from django.urls import path
-
 from mockoperator import views
 
 urlpatterns = [

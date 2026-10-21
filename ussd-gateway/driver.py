@@ -215,11 +215,11 @@ def scenario_operator_failure_shapes(base_url: str) -> None:
     suite, which can see the database; this just checks the USSD layer
     degrades sensibly for a human on the other end of the phone.
     """
-    for digit, must_contain in [
-        ("1", None),  # insufficient operator float -> clear failure
-        ("2", None),  # invalid number -> clear failure
-        ("3", None),  # transient error -> clear failure/try again
-        ("6", None),  # operator never resolves -> must still answer the subscriber
+    for digit in [
+        "1",  # insufficient operator float -> clear failure
+        "2",  # invalid number -> clear failure
+        "3",  # transient error -> clear failure/try again
+        "6",  # operator never resolves -> must still answer the subscriber
     ]:
         sid = _sid()
         phone = _phone(digit)

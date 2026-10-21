@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 from uuid import UUID
 
 import requests
@@ -56,7 +55,7 @@ OperatorResult = OperatorSuccess | OperatorFailure | OperatorUnknown
 
 
 class OperatorClient:
-    def __init__(self, base_url: Optional[str] = None, timeout_seconds: Optional[float] = None):
+    def __init__(self, base_url: str | None = None, timeout_seconds: float | None = None):
         self.base_url = base_url or settings.OPERATOR_BASE_URL
         self.timeout_seconds = timeout_seconds or settings.OPERATOR_CALL_TIMEOUT_SECONDS
 
