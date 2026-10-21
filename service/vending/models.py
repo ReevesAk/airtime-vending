@@ -41,7 +41,7 @@ class Account(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(account_type="OPERATOR_CLEARING") | models.Q(agent_phone_number__isnull=False),
+                condition=models.Q(account_type="OPERATOR_CLEARING") | models.Q(agent_phone_number__isnull=False),
                 name="agent_wallet_requires_phone_number",
             ),
         ]
