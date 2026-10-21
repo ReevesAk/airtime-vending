@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install ruff==0.17.1
+      - run: ruff check service operator ussd-gateway
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install pip-audit==2.10.1
+      - name: Audit locked dependencies for known vulnerabilities
+        run: |
+          for lock in service/requirements.txt operator/requirements.txt ussd-gateway/requirements.txt; do
+            echo "::group::$lock"
+            pip-audit --strict --require-hashes --disable-pip -r "$lock"
+            echo "::endgroup::"
+          done
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Money-correctness tests rely on real row locking; SQLite won't do.
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: airtime
+          POSTGRES_USER: airtime
+          POSTGRES_PASSWORD: airtime
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airtime"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: airtime
+      POSTGRES_USER: airtime
+      POSTGRES_PASSWORD: airtime
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: service/requirements.txt
+      - run: pip install -r service/requirements.txt
+      - name: Check for missing migrations
+        working-directory: service
+        run: python manage.py makemigrations --check --dry-run
+      - name: Unit and integration tests
+        working-directory: service
+        run: python -W error::DeprecationWarning manage.py test vending -v 2
+
+  e2e:
+    # Runs the gateway driver against both Django projects over real HTTP --
+    # the same fallback described in README "Environment I actually
+    # validated this in", minus Docker.
+    runs-on: ubuntu-latest
+    needs: test
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: airtime
+          POSTGRES_USER: airtime
+          POSTGRES_PASSWORD: airtime
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airtime"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: airtime
+      POSTGRES_USER: airtime
+      POSTGRES_PASSWORD: airtime
+      OPERATOR_BASE_URL: http://localhost:9000
+      USSD_SESSION_TTL_SECONDS: "5"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            service/requirements.txt
+            ussd-gateway/requirements.txt
+      # The service lockfile is a superset of what operator/ needs (Django),
+      # so one environment serves both projects.
+      - run: pip install -r service/requirements.txt
+      - run: python service/manage.py migrate --noinput
+      - name: Start operator and service
+        run: |
+          (cd operator && python manage.py runserver 127.0.0.1:9000 --noreload > ../operator.log 2>&1 &)
+          (cd service && python manage.py runserver 127.0.0.1:8000 --noreload > ../service.log 2>&1 &)
+          for url in http://127.0.0.1:9000/operator/health http://127.0.0.1:8000/ussd; do
+            for _ in $(seq 1 30); do
+              curl -s -o /dev/null "$url" && break
+              sleep 1
+            done
+          done
+      - name: Run gateway scenarios
+        run: python ussd-gateway/driver.py --scenario all --base-url http://127.0.0.1:8000 --session-ttl 5
+      - name: Server logs
+        if: always()
+        run: |
+          echo "::group::operator.log"; cat operator.log || true; echo "::endgroup::"
+          echo "::group::service.log"; cat service.log || true; echo "::endgroup::"
