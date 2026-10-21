@@ -92,15 +92,34 @@ all scenarios passed
 Requires Postgres (money-correctness tests rely on real row locking — see
 `service/config/settings.py` for why SQLite won't do).
 
+From a fresh clone, with Python 3.12:
+
 ```
-docker compose up -d postgres   # or `make up` for the full stack, either works
-cd service
-pip install -r requirements.txt
-POSTGRES_HOST=localhost POSTGRES_PORT=5432 POSTGRES_USER=airtime POSTGRES_PASSWORD=airtime \
-  python manage.py test vending
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r service/requirements.txt
+docker compose up -d postgres   # or any Postgres 14+ reachable via the POSTGRES_* vars
+make test                       # = cd service && python manage.py test vending
+make lint                       # = ruff check service operator ussd-gateway (pip install ruff first)
 ```
 
-26 tests, ~5s. The one the brief says will be checked first is
+`make test` uses the same defaults as `docker-compose.yml` (`airtime`/`airtime` on
+`localhost:5432`); override any of them with the variables listed in `.env.example`.
+
+### Dependencies
+
+Each project (`service/`, `operator/`, `ussd-gateway/`) declares its direct dependencies in
+`requirements.in`; `requirements.txt` beside it is the lockfile, compiled by `pip-compile` with
+every transitive dependency pinned and hashed. To change a dependency, edit the `.in` file and run
+`make lock` (needs `pip install pip-tools`). Dependabot proposes weekly updates.
+
+### CI
+
+`.github/workflows/ci.yml` runs on every push and pull request: ruff, `pip-audit` against all
+three lockfiles, the test suite above against a `postgres:16` service container (plus a
+missing-migrations check), and an end-to-end job that starts both Django projects and runs
+`ussd-gateway/driver.py --scenario all` over real HTTP.
+
+29 tests, ~8s. The one the brief says will be checked first is
 `vending/tests/test_concurrency.py` — it fires 12 threads at the identical confirm callback for
 one session and asserts exactly one `Transaction` and one balanced ledger pair exist afterwards.
 It uses `TransactionTestCase`, not `TestCase`, deliberately: Django's regular `TestCase` wraps
